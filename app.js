@@ -8,6 +8,7 @@ const notFoundHandler = require('./middlewares/notFoundHandler.js');
 const errorHandler = require('./middlewares/errorHandler.js');
 
 app.use(express.json());
+app.use(express.static("public"))
 
 app.use('/auth', authRouter);
 app.get('/', (req, res) => res.send('Home Blog!'));
