@@ -3,7 +3,7 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 module.exports = async (req, res, next) => {
-    const userID = parseInt(await getIdLoggedUser(req));
+    const userID = await getIdLoggedUser(req);
     const {slug} = req.params;
 
     const post = await prisma.post.findUnique({where: {slug}});

@@ -1,6 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const { createSlug } = require('../utils.js');
+const getIdLoggedUser = require('../utils/getIdLoggedUser.js');
 
 const index = async (req, res, next) => {
     let { published, word, page = 1, limit = 5 } = req.query;
@@ -34,6 +35,11 @@ const index = async (req, res, next) => {
         const posts = await prisma.post.findMany({
             where,
             include: {
+                user: {
+                    select: {
+                        name: true
+                    }
+                },
                 category: {
                     select: {
                         name: true
@@ -48,6 +54,13 @@ const index = async (req, res, next) => {
             take: parseInt(limit),
             skip: parseInt(offset)
         });
+
+        posts.map(post => {
+            delete post.categoryId;
+            delete post.userId;
+            delete post.createdAt;
+            delete post.updatedAt;
+        })
 
         const count = parseInt(posts.length);
         if (count === 0) {
@@ -83,6 +96,7 @@ const store = async (req, res, next) => {
             content,
             published,
             image,
+            userId: await getIdLoggedUser(req),
             tags: {
                 connect: tags.map(id => ({ id }))
             }
@@ -111,6 +125,11 @@ const show = async (req, res, next) => {
         const foundPost = await prisma.post.findUnique({
             where: { slug },
             include: {
+                user: {
+                    select: {
+                        name: true
+                    }
+                },
                 category: {
                     select: {
                         name: true
@@ -123,6 +142,11 @@ const show = async (req, res, next) => {
                 }
             },
         });
+        
+        delete foundPost.categoryId;
+        delete foundPost.userId;
+        delete foundPost.createdAt;
+        delete foundPost.updatedAt;
 
         if (!foundPost) {
             return res.status(404).json({
@@ -161,14 +185,15 @@ const update = async (req, res, next) => {
             data.categoryId = categoryId;
         }
 
-        const updatedPost = await prisma.post.update({
+        await prisma.post.update({
             where: { slug },
             data
         })
+
         res.status(200).json({
             status: 200,
             success: true,
-            updated_post: updatedPost,
+            message: 'Post modified'
         })
     } catch (error) {
         next(error)
@@ -179,7 +204,7 @@ const destroy = async (req, res, next) => {
     try {
         const { slug } = req.params;
 
-        const deletedPost = await prisma.post.delete({ where: { slug } })
+        await prisma.post.delete({ where: { slug } })
         res.status(200).json({
             status: 200,
             success: true,
