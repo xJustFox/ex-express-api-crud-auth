@@ -1,3 +1,4 @@
+const generateToken = require('../utils/generateToken');
 const { hashPassword, comparePassword } = require('../utils/password');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
@@ -14,12 +15,14 @@ const register = async (req, res, next) => {
 
         const user = await prisma.user.create({ data });
 
-        delete user.id;
-        delete user.password;
-        delete user.createdAt;
-        delete user.updatedAt;
+        const dataUser = {
+            name: user.name,
+            email: user.email
+        }
 
-        res.json({ user })
+        const token = generateToken(dataUser);
+
+        res.json({ token, dataUser })
     } catch (error) {
         next(error);
     }
@@ -45,8 +48,12 @@ const login = async (req, res, next) => {
             name: user.name,
             email: user.email
         }
+
+        const token = generateToken(data);
+
         res.json({
             msg: "You are logged in",
+            token,
             data
         })
 
