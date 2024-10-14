@@ -1,6 +1,24 @@
 const { PrismaClient } = require('@prisma/client');
+const { hashPassword } = require('./utils/password');
 const prisma = new PrismaClient();
 
+const users = [
+    {
+        name: "Mario Rossi",
+        email: "mario.rossi@example.com",
+        password: "A1b2C3d4"
+    },
+    {
+        name: "Giulia Bianchi",
+        email: "giulia.bianchi@example.com",
+        password: "XyZ9LmN8"
+    },
+    {
+        name: "Luca Verdi",
+        email: "luca.verdi@example.com",
+        password: "P5k6L8n2"
+    }
+];
 
 const posts = [
     {
@@ -10,7 +28,8 @@ const posts = [
         published: true,
         image: "meditazione.jpg",
         tags: [1, 2, 3, 4], // benessere, meditazione, salute, equilibrio
-        categoryId: 1 // Benessere e Salute
+        categoryId: 1, // Benessere e Salute
+        userId: 1
     },
     {
         title: "Come Creare un Giardino Sostenibile",
@@ -19,7 +38,8 @@ const posts = [
         published: true,
         image: "giardino_sostenibile.jpg",
         tags: [5, 6, 7, 8], // giardinaggio, sostenibilità, ambiente, ecologia
-        categoryId: 2 // Sostenibilità e Ambiente
+        categoryId: 2, // Sostenibilità e Ambiente
+        userId: 2
     },
     {
         title: "10 Libri che Ti Cambieranno la Vita",
@@ -28,7 +48,8 @@ const posts = [
         published: false,
         image: "libri_cambiavita.jpg",
         tags: [9, 10, 11, 12], // libri, ispirazione, crescita personale, lettura
-        categoryId: 4 // Lettura e Ispirazione
+        categoryId: 4, // Lettura e Ispirazione
+        userId: 3
     },
     {
         title: "Viaggiare in Islanda: Una Guida Completa",
@@ -37,7 +58,8 @@ const posts = [
         published: true,
         image: "islanda.jpg",
         tags: [13, 14, 15, 16], // viaggi, Islanda, natura, avventura
-        categoryId: 3 // Viaggi e Natura
+        categoryId: 3, // Viaggi e Natura
+        userId: 1
     },
     {
         title: "Alimentazione Vegana: Pro e Contro",
@@ -46,7 +68,8 @@ const posts = [
         published: true,
         image: "alimentazione_vegana.jpg",
         tags: [17, 18, 19], // alimentazione, vegano, dieta
-        categoryId: 1 // Benessere e Salute
+        categoryId: 1, // Benessere e Salute
+        userId: 2
     },
     {
         title: "L'Importanza del Sonno per il Benessere",
@@ -55,7 +78,8 @@ const posts = [
         published: false,
         image: "sonno_benessere.jpg",
         tags: [20, 21, 3], // sonno, riposo, salute
-        categoryId: 1 // Benessere e Salute
+        categoryId: 1, // Benessere e Salute
+        userId: 3
     }
 ];
 
@@ -91,6 +115,20 @@ const categories = [
     { name: "Lettura e Ispirazione" }
 ];
 
+users.forEach(async user => {
+    const { name, email, password } = user;
+
+    const data = {
+        name,
+        email,
+        password: await hashPassword(password)
+    }
+
+    await prisma.user.create({ data })
+        .then(count => console.log(count))
+        .catch(err => console.log(err))
+});
+
 prisma.tag.createMany({
     data: newtags
 })
@@ -104,7 +142,7 @@ prisma.category.createMany({
 .catch(err => console.log(err))
 
 posts.forEach(async post => {
-    const { title, content, slug, published, image, categoryId, tags } = post;
+    const { title, content, slug, published, image, categoryId, userId, tags } = post;
     const data = {
         title,
         slug,
